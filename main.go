@@ -8,41 +8,94 @@ import (
 	"strings"
 )
 
+func parseCSV(text string) ([]int, error) {
+	parts := strings.Split(text, ",")
+	intArray := make([]int, 0, len(parts))
+
+	for _, part := range parts {
+		number, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, err
+		}
+
+		intArray = append(intArray, number)
+	}
+	return intArray, nil
+
+}
+
+func dotProduct(coefficients, witness []int) int {
+	result := 0
+	for i := 0; i < len(witness); i++ {
+		result += coefficients[i] * witness[i]
+	}
+	return result
+}
+
 func main() {
 	sc := bufio.NewScanner(os.Stdin)
 	sc.Buffer(make([]byte, 1024*1024), 1024*1024)
 
+	var witness []int
+	constraintIndex := 0
 	for sc.Scan() {
 		parts := strings.Fields(sc.Text())
-		if len(parts) != 3 || parts[0] != "EVAL" {
+		if len(parts) == 0 {
 			continue
 		}
 
-		x, err := strconv.Atoi(parts[2])
-		if err != nil {
-			continue
-		}
-
-		coefficientStrings := strings.Split(parts[1], ",")
-		coefficients := make([]int, len(coefficientStrings))
-		valid := true
-
-		for i, text := range coefficientStrings {
-			coefficients[i], err = strconv.Atoi(text)
-			if err != nil {
-				valid = false
-				break
+		if parts[0] == "WITNESS" {
+			if len(parts) != 2 {
+				continue
 			}
-		}
-		if !valid {
+
+			parsedWitness, err := parseCSV(parts[1])
+			if err != nil {
+				continue
+			}
+
+			witness = parsedWitness
 			continue
 		}
 
-		result := 0
-		for i := len(coefficients) - 1; i >= 0; i-- {
-			result = result*x + coefficients[i]
-		}
+		if parts[0] == "CONSTRAINT" {
+			if len(parts) != 4 || witness == nil {
+				continue
+			}
 
-		fmt.Println(result)
+			a, err := parseCSV(parts[1])
+			if err != nil {
+				continue
+			}
+
+			b, err := parseCSV(parts[2])
+			if err != nil {
+				continue
+			}
+
+			c, err := parseCSV(parts[3])
+			if err != nil {
+				continue
+			}
+
+			if len(a) != len(witness) ||
+				len(b) != len(witness) ||
+				len(c) != len(witness) {
+				continue
+			}
+			aResult := dotProduct(a, witness)
+			bResult := dotProduct(b, witness)
+			cResult := dotProduct(c, witness)
+
+			if aResult*bResult != cResult {
+				fmt.Printf("BAD %d\n", constraintIndex)
+				return
+			}
+			// если не равно:  и
+
+			constraintIndex++
+		}
 	}
+
+	fmt.Println("OK")
 }
