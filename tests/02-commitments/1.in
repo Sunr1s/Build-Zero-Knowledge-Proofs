@@ -1,0 +1,3 @@
+COMMIT a 42 secret
+VERIFY a 42 secret
+VERIFY a 41 secret
