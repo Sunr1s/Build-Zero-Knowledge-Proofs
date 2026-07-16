@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -14,29 +16,38 @@ func main() {
 
 	for sc.Scan() {
 		parts := strings.Fields(sc.Text())
-		if len(parts) != 7 || parts[0] != "VERIFY" {
+		if len(parts) != 10 {
 			continue
 		}
 
-		generator, ok1 := new(big.Int).SetString(parts[1], 10)
-		primeModulus, ok2 := new(big.Int).SetString(parts[2], 10)
-		publicValue, ok3 := new(big.Int).SetString(parts[3], 10)
-		commitment, ok4 := new(big.Int).SetString(parts[4], 10)
-		challenge, ok5 := new(big.Int).SetString(parts[5], 10)
-		response, ok6 := new(big.Int).SetString(parts[6], 10)
-		if !(ok1 && ok2 && ok3 && ok4 && ok5 && ok6) {
+		g, ok1 := new(big.Int).SetString(parts[1], 10)
+		p, ok2 := new(big.Int).SetString(parts[3], 10)
+		q, ok3 := new(big.Int).SetString(parts[5], 10)
+		priv, ok4 := new(big.Int).SetString(parts[7], 10)
+		nonce, ok5 := new(big.Int).SetString(parts[9], 10)
+
+		if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
+			panic("invalid number in header")
+		}
+
+		y := new(big.Int).Exp(g, priv, p)
+		r := new(big.Int).Exp(g, nonce, p)
+		rBytes := r.Bytes()
+		yBytes := y.Bytes()
+
+		messageBytes, err := hex.DecodeString(parts[1])
+		if err != nil {
 			continue
 		}
-
-		left := new(big.Int).Exp(generator, response, primeModulus)
-		publicPart := new(big.Int).Exp(publicValue, challenge, primeModulus)
-		right := new(big.Int).Mul(commitment, publicPart)
-		right.Mod(right, primeModulus)
-
-		if left.Cmp(right) == 0 {
-			fmt.Println("OK")
-		} else {
-			fmt.Println("BAD")
-		}
+		data := append([]byte{}, rBytes...)
+		data = append(data, messageBytes...)
+		data = append(data, yBytes...)
+		digest := sha256.Sum256(data)
+		c := new(big.Int).SetBytes(digest[:])
+		c.Mod(c, q)
+		product := new(big.Int).Mul(c, priv)
+		z := new(big.Int).Add(nonce, product)
+		z.Mod(z, q)
+		fmt.Println(r.Text(16), z.Text(16))
 	}
 }
