@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math/big"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -14,27 +14,35 @@ func main() {
 
 	for sc.Scan() {
 		parts := strings.Fields(sc.Text())
-		if len(parts) != 6 {
+		if len(parts) != 3 || parts[0] != "EVAL" {
 			continue
 		}
 
-		g, ok1 := new(big.Int).SetString(parts[0], 10)
-		y, ok2 := new(big.Int).SetString(parts[1], 10)
-		p, ok3 := new(big.Int).SetString(parts[2], 10)
-		q, ok4 := new(big.Int).SetString(parts[3], 10)
-		c, ok5 := new(big.Int).SetString(parts[4], 10)
-		z, ok6 := new(big.Int).SetString(parts[5], 10)
-
-		if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 || !ok6 {
-			panic("invalid number in header")
+		x, err := strconv.Atoi(parts[2])
+		if err != nil {
+			continue
 		}
-		negativeC := new(big.Int).Neg(c)
-		negativeC.Mod(negativeC, q)
-		gToZ := new(big.Int).Exp(g, z, p)
-		yToNegativeC := new(big.Int).Exp(y, negativeC, p)
-		r := new(big.Int).Mul(gToZ, yToNegativeC)
-		r.Mod(r, p)
-		fmt.Println(r)
 
+		coefficientStrings := strings.Split(parts[1], ",")
+		coefficients := make([]int, len(coefficientStrings))
+		valid := true
+
+		for i, text := range coefficientStrings {
+			coefficients[i], err = strconv.Atoi(text)
+			if err != nil {
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			continue
+		}
+
+		result := 0
+		for i := len(coefficients) - 1; i >= 0; i-- {
+			result = result*x + coefficients[i]
+		}
+
+		fmt.Println(result)
 	}
 }
