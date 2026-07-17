@@ -14,5 +14,6 @@ Completed lessons:
 - `07-snarks-overview`
 - `08-circuits-r1cs`
 - `09-use-cases`
+- `10-production`
 
-Lesson 10 will be added after it is implemented.
+All course lessons are preserved here.
