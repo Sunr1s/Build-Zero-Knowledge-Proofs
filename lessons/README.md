@@ -13,5 +13,6 @@ Completed lessons:
 - `06-or-proofs`
 - `07-snarks-overview`
 - `08-circuits-r1cs`
+- `09-use-cases`
 
-Lessons 09 and 10 will be added after they are implemented.
+Lesson 10 will be added after it is implemented.
